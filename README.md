@@ -14,10 +14,10 @@ plantilla `templates/index.html` con `render_template`.
 | Al menos una ruta | `@app.route("/")` → `inicio()` |
 | Al menos una plantilla | `templates/index.html` |
 | Datos enviados por variables | `render_template("index.html", nombre=..., apellidos=..., ...)` |
-| Variables | `nombre`, `universidad`, `siglas` |
+| Variables | `nombre`, `universidad`, `siglas`, `matricula` |
 | Diccionario | `apellidos = {"primero": ..., "segundo": ...}` |
 | Listas | `asignaturas` (5, con código) y `hobbies` (3), listas de diccionarios |
-| Jinja2 | `{{ nombre }}`, `{{ apellidos.primero }}`, macro `icono()`, filtro `length` |
+| Jinja2 | `{{ nombre }}`, `{{ apellidos.primero }}`, macro `icono()`, filtros `length` y `upper` |
 | Ciclo `for` de Jinja2 | `{% for asignatura in asignaturas %}` y `{% for hobby in hobbies %}` (también el nombre letra por letra) |
 
 ## Diseño

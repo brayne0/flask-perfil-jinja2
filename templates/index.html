@@ -106,6 +106,7 @@
         .campo { margin: 0 0 10px; }
         .campo small { display: block; font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; color: var(--gris); }
         .campo b { font-size: 17px; }
+        .campo b.matricula { font-family: "JetBrains Mono", monospace; letter-spacing: .04em; background: var(--amarillo); padding: 1px 6px; }
         .codigo-barras {
             height: 38px; margin: 0 18px 18px;
             background: repeating-linear-gradient(90deg, var(--tinta) 0 2px, transparent 2px 4px, var(--tinta) 4px 7px, transparent 7px 9px, var(--tinta) 9px 10px, transparent 10px 14px);
@@ -239,6 +240,7 @@
                         <div>
                             <p class="campo"><small>Nombre</small><b>{{ nombre }}</b></p>
                             <p class="campo"><small>Apellidos</small><b>{{ apellidos.primero }} {{ apellidos.segundo }}</b></p>
+                            <p class="campo"><small>Matrícula</small><b class="matricula">{{ matricula|upper }}</b></p>
                             <p class="campo"><small>Asignaturas</small><b>{{ asignaturas|length }} este cuatrimestre</b></p>
                         </div>
                     </div>

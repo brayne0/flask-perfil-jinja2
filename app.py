@@ -9,6 +9,7 @@ def inicio():
     nombre = "Brayne"
     universidad = "Universidad Nacional Pedro Henríquez Ureña"
     siglas = "UNPHU"
+    matricula = "bd21-2193"
 
     # Diccionario para los apellidos
     apellidos = {
@@ -37,6 +38,7 @@ def inicio():
         apellidos=apellidos,
         universidad=universidad,
         siglas=siglas,
+        matricula=matricula,
         asignaturas=asignaturas,
         hobbies=hobbies,
     )
