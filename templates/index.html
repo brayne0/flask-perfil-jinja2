@@ -1,0 +1,444 @@
+{#- Íconos de los hobbies: se eligen según la clave "icono" que envía Flask -#}
+{% macro icono(nombre) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if nombre == "grafica" %}<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/><path d="M16 7h4v4"/>
+{%- elif nombre == "codigo" %}<path d="M8 6 2 12l6 6M16 6l6 6-6 6M14 4l-4 16"/>
+{%- elif nombre == "baloncesto" %}<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3.2 3.2 3.2 9.6 0 12.8M18.4 5.6c-3.2 3.2-3.2 9.6 0 12.8"/>
+{%- else %}<circle cx="12" cy="12" r="9"/>
+{%- endif %}
+</svg>
+{%- endmacro %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ nombre }} {{ apellidos.primero }} · {{ siglas }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --papel: #f2ede1;
+            --tinta: #141414;
+            --verde: #1d7a36;
+            --amarillo: #ffd23f;
+            --menta: #cfe8d4;
+            --gris: #5b5850;
+            --inicio: 1.5s; /* lo que dura la cortina de entrada */
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--papel);
+            color: var(--tinta);
+            font-family: "Archivo", sans-serif;
+            overflow-x: hidden;
+        }
+        .envoltura { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+        /* ---------- Cortina de entrada con contador ---------- */
+        .telon {
+            position: fixed; inset: 0; z-index: 50; background: var(--verde); color: var(--papel);
+            display: flex; flex-direction: column; justify-content: space-between; padding: 28px;
+            animation: abrir .8s var(--inicio) cubic-bezier(.8, 0, .2, 1) forwards;
+        }
+        @keyframes abrir { to { transform: translateY(-100%); visibility: hidden; } }
+        .telon p { margin: 0; font-family: "JetBrains Mono", monospace; font-size: 14px; text-transform: uppercase; }
+        .contador { font-weight: 900; font-stretch: 62%; font-size: clamp(120px, 26vw, 360px); line-height: .8; align-self: flex-end; }
+
+        /* ---------- Cursor seguidor ---------- */
+        .seguidor {
+            position: fixed; left: 0; top: 0; z-index: 40; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+            border-radius: 50%; background: var(--papel); mix-blend-mode: difference; pointer-events: none;
+            transition: width .25s, height .25s, margin .25s; display: none;
+        }
+        .seguidor.grande { width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+        @media (pointer: fine) { .seguidor { display: block; } }
+
+        /* ---------- Barra superior ---------- */
+        .barra { border-bottom: 2px solid var(--tinta); font-family: "JetBrains Mono", monospace; font-size: 13px; text-transform: uppercase; }
+        .barra .envoltura { display: flex; justify-content: space-between; gap: 16px; padding-block: 14px; flex-wrap: wrap; }
+        .barra b { color: var(--verde); }
+
+        /* ---------- Portada ---------- */
+        .portada { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 48px; align-items: start; padding: 56px 0 80px; }
+        .saludo { font-family: "JetBrains Mono", monospace; font-size: 15px; margin: 0 0 18px; }
+        .saludo span { background: var(--amarillo); padding: 2px 6px; }
+        h1 {
+            margin: 0; font-weight: 900; font-stretch: 62%; text-transform: uppercase;
+            font-size: clamp(64px, 11vw, 150px); line-height: .86; letter-spacing: -.01em;
+        }
+        .linea { display: block; overflow: hidden; padding: .16em 0 .02em; margin-top: -.06em; }
+        .linea > span { display: inline-block; transform: translateY(105%) rotate(4deg); animation: subir 1s calc(var(--inicio) + .35s) cubic-bezier(.7, 0, .2, 1) forwards; }
+        .linea:nth-child(2) > span { animation-delay: calc(var(--inicio) + .47s); color: var(--verde); }
+        .linea:nth-child(3) > span { animation-delay: calc(var(--inicio) + .59s); }
+        @keyframes subir { to { transform: none; } }
+        .letra { display: inline-block; transition: transform .35s cubic-bezier(.3, 1.8, .5, 1), color .2s; }
+        .letra:hover { transform: translateY(-14px) rotate(-8deg) scale(1.1); color: var(--verde); }
+        .bajada { max-width: 520px; margin: 26px 0 0; font-size: 19px; line-height: 1.55; }
+        .resaltado { background: linear-gradient(var(--amarillo), var(--amarillo)) no-repeat 0 85% / 0 40%; animation: marcar 1s calc(var(--inicio) + 1.2s) ease forwards; }
+        @keyframes marcar { to { background-size: 100% 40%; } }
+
+        /* Carnet colgando de un cordón */
+        .colgador { justify-self: center; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; transform-origin: 50% 0; }
+        .cordon { width: 14px; height: 90px; background: repeating-linear-gradient(180deg, var(--verde) 0 10px, var(--amarillo) 10px 20px); border-inline: 2px solid var(--tinta); }
+        .broche { width: 40px; height: 16px; margin-top: -2px; border: 2px solid var(--tinta); border-radius: 4px; background: #c9c3b4; }
+        .carnet {
+            width: 100%; margin-top: -2px; background: #fff; border: 2px solid var(--tinta); border-radius: 14px;
+            box-shadow: 8px 8px 0 var(--tinta); overflow: hidden;
+            animation: caer 1.3s calc(var(--inicio) + .5s) cubic-bezier(.3, 1.5, .5, 1) both;
+            transition: scale .3s;
+        }
+        .carnet:hover { scale: 1.03; }
+        .colgador { animation: caer 1.3s calc(var(--inicio) + .5s) cubic-bezier(.3, 1.5, .5, 1) both; }
+        .carnet { animation: none; }
+        @keyframes caer { from { transform: translateY(-140%); } to { transform: none; } }
+        .carnet-cabeza { background: var(--verde); color: #fff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+        .carnet-cabeza strong { font-size: 22px; font-weight: 900; letter-spacing: .02em; }
+        .carnet-cabeza span { font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; }
+        .carnet-cuerpo { display: grid; grid-template-columns: 96px 1fr; gap: 18px; padding: 20px 18px; }
+        .foto {
+            width: 96px; height: 116px; border: 2px solid var(--tinta); border-radius: 8px;
+            display: grid; place-items: center; background: var(--amarillo);
+            font-size: 44px; font-weight: 900; font-stretch: 62%;
+        }
+        .campo { margin: 0 0 10px; }
+        .campo small { display: block; font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; color: var(--gris); }
+        .campo b { font-size: 17px; }
+        .codigo-barras {
+            height: 38px; margin: 0 18px 18px;
+            background: repeating-linear-gradient(90deg, var(--tinta) 0 2px, transparent 2px 4px, var(--tinta) 4px 7px, transparent 7px 9px, var(--tinta) 9px 10px, transparent 10px 14px);
+        }
+
+        /* ---------- Cinta que reacciona al scroll ---------- */
+        .cinta { background: var(--verde); color: var(--papel); border-block: 2px solid var(--tinta); overflow: hidden; padding: 14px 0; }
+        .cinta-pista { display: flex; width: max-content; animation: correr 30s linear infinite; }
+        .cinta span { font-weight: 800; font-stretch: 75%; font-size: 28px; text-transform: uppercase; white-space: nowrap; padding-right: 36px; }
+        .cinta span::after { content: "●"; margin-left: 36px; color: var(--amarillo); font-size: 16px; vertical-align: middle; }
+        @keyframes correr { to { transform: translateX(-50%); } }
+
+        /* ---------- Secciones ---------- */
+        .seccion { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; padding: 72px 0; border-bottom: 2px solid var(--tinta); }
+        .seccion:last-of-type { border-bottom: 0; }
+        .num {
+            position: sticky; top: 24px; align-self: start;
+            font-weight: 900; font-stretch: 62%; font-size: 120px; line-height: .85;
+            color: transparent; -webkit-text-stroke: 2px var(--tinta);
+            background: linear-gradient(to top, var(--verde) var(--llenado, 0%), transparent var(--llenado, 0%));
+            -webkit-background-clip: text; background-clip: text;
+        }
+        h2 { margin: 0 0 28px; font-weight: 900; font-stretch: 75%; text-transform: uppercase; font-size: clamp(36px, 5vw, 60px); line-height: .95; }
+
+        .dato { font-weight: 800; font-stretch: 75%; font-size: clamp(44px, 7vw, 88px); line-height: 1; margin: 0; text-transform: uppercase; }
+        .ficha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 2px solid var(--tinta); }
+        .ficha > div { padding: 22px 24px; }
+        .ficha > div + div { border-left: 2px solid var(--tinta); }
+        .etq { display: block; font-family: "JetBrains Mono", monospace; font-size: 12px; text-transform: uppercase; color: var(--gris); margin-bottom: 8px; }
+        .ficha .dato { font-size: clamp(34px, 5vw, 60px); }
+        .estampar { display: inline-block; }
+        .visible .estampar { animation: estampar .6s cubic-bezier(.3, 1.8, .5, 1) both; }
+        @keyframes estampar { from { transform: scale(2.2) rotate(-6deg); opacity: 0; } }
+
+        /* Asignaturas: renglones que se llenan y se decodifican */
+        .lista { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--tinta); }
+        .lista li {
+            position: relative; display: grid; grid-template-columns: 110px minmax(0, 1fr) 40px; gap: 16px; align-items: center;
+            padding: 20px 12px; border-bottom: 2px solid var(--tinta); isolation: isolate;
+        }
+        .lista li::before {
+            content: ""; position: absolute; inset: 0; z-index: -1; background: var(--verde);
+            transform: scaleY(0); transform-origin: bottom; transition: transform .4s cubic-bezier(.7, 0, .2, 1);
+        }
+        .lista li:hover::before { transform: scaleY(1); }
+        .lista li:hover { color: var(--papel); }
+        .lista .cod { font-family: "JetBrains Mono", monospace; font-size: 14px; }
+        .lista .nom { font-size: clamp(20px, 2.6vw, 30px); font-weight: 700; font-stretch: 85%; }
+        .lista .flecha { font-size: 26px; transition: transform .3s; }
+        .lista li:hover .flecha { transform: translateX(8px) rotate(-45deg); }
+
+        /* Hobbies: stickers que se pueden arrastrar */
+        .pista-arrastre { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--gris); margin: -16px 0 22px; }
+        .stickers { display: flex; flex-wrap: wrap; gap: 28px; padding-top: 8px; }
+        .sticker {
+            flex: 1 1 220px; padding: 24px; border: 2px solid var(--tinta); border-radius: 16px;
+            background: #fff; box-shadow: 6px 6px 0 var(--tinta);
+            cursor: grab; touch-action: none; user-select: none; position: relative;
+            transition: rotate .3s cubic-bezier(.3, 1.6, .5, 1), box-shadow .3s, scale .3s;
+        }
+        .sticker:nth-child(1) { rotate: -2.5deg; background: var(--amarillo); }
+        .sticker:nth-child(2) { rotate: 1.5deg; }
+        .sticker:nth-child(3) { rotate: -1deg; background: var(--menta); }
+        .sticker:hover { box-shadow: 10px 10px 0 var(--tinta); }
+        .sticker.arrastrando { cursor: grabbing; z-index: 5; scale: 1.06; rotate: 4deg; box-shadow: 16px 18px 0 var(--tinta); transition: none; }
+        .sticker svg { width: 40px; height: 40px; margin-bottom: 18px; }
+        .sticker:hover svg { animation: brincar .5s ease; }
+        @keyframes brincar { 40% { transform: translateY(-8px) rotate(-10deg); } }
+        .sticker h3 { margin: 0 0 6px; font-size: 26px; font-weight: 800; font-stretch: 80%; text-transform: uppercase; }
+        .sticker p { margin: 0; font-size: 16px; }
+
+        /* Aparición al hacer scroll */
+        .revelar { opacity: 0; transform: translateY(40px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .8, .2, 1); transition-delay: var(--retraso, 0ms); }
+        .revelar.visible { opacity: 1; transform: none; }
+
+        footer { background: var(--tinta); color: var(--papel); }
+        footer .envoltura { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 28px; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+        footer b { color: var(--amarillo); }
+
+        @media (max-width: 800px) {
+            .portada { grid-template-columns: 1fr; }
+            .seccion { grid-template-columns: 1fr; gap: 12px; }
+            .num { position: static; font-size: 72px; }
+            .ficha { grid-template-columns: 1fr; }
+            .ficha > div + div { border-left: 0; border-top: 2px solid var(--tinta); }
+            .lista li { grid-template-columns: 80px minmax(0, 1fr) 24px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .telon { display: none; }
+            .linea > span, .revelar { transform: none; opacity: 1; }
+            .resaltado { background-size: 100% 40%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="telon" aria-hidden="true">
+        <p>{{ siglas }} · Cargando perfil de {{ nombre }}</p>
+        <div class="contador"><span id="contador">0</span>%</div>
+    </div>
+    <div class="seguidor" aria-hidden="true"></div>
+
+    <div class="barra">
+        <div class="envoltura">
+            <span><b>{{ siglas }}</b> · Carrera de Informática</span>
+            <span>Tarea · Flask + Jinja2</span>
+        </div>
+    </div>
+
+    <div class="envoltura">
+        <header class="portada">
+            <div>
+                <p class="saludo">Hola, soy <span>estudiante de la {{ siglas }}</span></p>
+                <h1 aria-label="{{ nombre }} {{ apellidos.primero }} {{ apellidos.segundo }}">
+                    <span class="linea" aria-hidden="true"><span>
+                        {%- for letra in nombre -%}<span class="letra">{{ letra }}</span>{%- endfor -%}
+                    </span></span>
+                    <span class="linea" aria-hidden="true"><span>{{ apellidos.primero }}</span></span>
+                    <span class="linea" aria-hidden="true"><span>{{ apellidos.segundo }}</span></span>
+                </h1>
+                <p class="bajada">Estudio en la <span class="resaltado">{{ universidad }}</span>. Esta página la hice con Python, Flask y plantillas Jinja2.</p>
+            </div>
+
+            <div class="colgador" id="colgador">
+                <div class="cordon"></div>
+                <div class="broche"></div>
+                <aside class="carnet" aria-label="Carnet de estudiante">
+                    <div class="carnet-cabeza"><strong>{{ siglas }}</strong><span>Carnet estudiantil</span></div>
+                    <div class="carnet-cuerpo">
+                        <div class="foto" aria-hidden="true">{{ nombre[0] }}{{ apellidos.primero[0] }}</div>
+                        <div>
+                            <p class="campo"><small>Nombre</small><b>{{ nombre }}</b></p>
+                            <p class="campo"><small>Apellidos</small><b>{{ apellidos.primero }} {{ apellidos.segundo }}</b></p>
+                            <p class="campo"><small>Asignaturas</small><b>{{ asignaturas|length }} este cuatrimestre</b></p>
+                        </div>
+                    </div>
+                    <div class="codigo-barras" aria-hidden="true"></div>
+                </aside>
+            </div>
+        </header>
+    </div>
+
+    <div class="cinta" aria-hidden="true">
+        <div class="cinta-pista">
+            {%- for vuelta in range(2) %}
+            {%- for a in asignaturas %}<span>{{ a.nombre }}</span>{% endfor %}
+            {%- for h in hobbies %}<span>{{ h.nombre }}</span>{% endfor %}
+            {%- endfor %}
+        </div>
+    </div>
+
+    <main class="envoltura">
+        <!-- 1. Nombre -->
+        <section class="seccion">
+            <div class="num" aria-hidden="true">01</div>
+            <div class="revelar">
+                <h2>Nombre</h2>
+                <p class="dato"><span class="estampar">{{ nombre }}</span></p>
+            </div>
+        </section>
+
+        <!-- 2. Apellidos -->
+        <section class="seccion">
+            <div class="num" aria-hidden="true">02</div>
+            <div class="revelar">
+                <h2>Apellidos</h2>
+                <div class="ficha">
+                    <div><span class="etq">Primer apellido</span><p class="dato"><span class="estampar">{{ apellidos.primero }}</span></p></div>
+                    <div><span class="etq">Segundo apellido</span><p class="dato"><span class="estampar" style="animation-delay: .15s">{{ apellidos.segundo }}</span></p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Asignaturas -->
+        <section class="seccion">
+            <div class="num" aria-hidden="true">03</div>
+            <div>
+                <h2 class="revelar">Asignaturas</h2>
+                <ul class="lista">
+                    {% for asignatura in asignaturas %}
+                    <li class="revelar" style="--retraso: {{ loop.index0 * 90 }}ms">
+                        <span class="cod">{{ asignatura.codigo }}</span>
+                        <span class="nom" data-texto="{{ asignatura.nombre }}">{{ asignatura.nombre }}</span>
+                        <span class="flecha" aria-hidden="true">→</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+
+        <!-- 4. Hobbies -->
+        <section class="seccion">
+            <div class="num" aria-hidden="true">04</div>
+            <div>
+                <h2 class="revelar">Hobbies</h2>
+                <p class="pista-arrastre revelar">↳ arrastra los stickers</p>
+                <div class="stickers">
+                    {% for hobby in hobbies %}
+                    <article class="sticker revelar" style="--retraso: {{ loop.index0 * 120 }}ms">
+                        {{ icono(hobby.icono) }}
+                        <h3>{{ hobby.nombre }}</h3>
+                        <p>{{ hobby.detalle }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="envoltura">
+            <span>{{ nombre }} {{ apellidos.primero }} {{ apellidos.segundo }} · <b>{{ siglas }}</b></span>
+            <span>Hecho con Flask + Jinja2</span>
+        </div>
+    </footer>
+
+    <script>
+        const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        // Contador de la cortina de entrada (0 → 100)
+        const contador = document.getElementById("contador");
+        const t0 = performance.now();
+        (function contar(t) {
+            const p = Math.min(1, (t - t0) / 1300);
+            contador.textContent = Math.round(100 * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) requestAnimationFrame(contar);
+        })(t0);
+
+        // Aparición de elementos al hacer scroll
+        const observador = new IntersectionObserver((entradas) => {
+            entradas.forEach((e) => {
+                if (e.isIntersecting) { e.target.classList.add("visible"); observador.unobserve(e.target); }
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll(".revelar").forEach((el) => observador.observe(el));
+
+        // Cursor que sigue al mouse y crece sobre lo interactivo
+        const seguidor = document.querySelector(".seguidor");
+        let cx = -100, cy = -100, sx = -100, sy = -100;
+        addEventListener("pointermove", (e) => {
+            cx = e.clientX; cy = e.clientY;
+            seguidor.classList.toggle("grande", !!e.target.closest(".lista li, .sticker, .carnet, .letra"));
+        });
+
+        // Carnet que se balancea (resorte) con el scroll y el mouse
+        const colgador = document.getElementById("colgador");
+        let angulo = 0, velAng = 0, ultimoScroll = scrollY, velScroll = 0, mouseX = 0, ultimoMouseX = 0;
+        addEventListener("pointermove", (e) => { mouseX = e.clientX; });
+
+        // Cinta que se inclina y acelera con el scroll
+        const cinta = document.querySelector(".cinta");
+        const animCinta = document.querySelector(".cinta-pista").getAnimations()[0];
+
+        // Números de sección que se llenan de verde
+        const secciones = [...document.querySelectorAll(".seccion")];
+
+        function cuadro() {
+            // cursor con retraso suave
+            sx += (cx - sx) * 0.2; sy += (cy - sy) * 0.2;
+            seguidor.style.transform = `translate(${sx}px, ${sy}px)`;
+
+            // velocidad del scroll
+            velScroll += ((scrollY - ultimoScroll) - velScroll) * 0.2;
+            ultimoScroll = scrollY;
+
+            // resorte del carnet
+            const empujon = velScroll * 0.6 + (mouseX - ultimoMouseX) * 0.15;
+            ultimoMouseX = mouseX;
+            velAng += -angulo * 0.04 + empujon * 0.05;
+            velAng *= 0.93;
+            angulo = Math.max(-35, Math.min(35, angulo + velAng));
+            colgador.style.rotate = `${angulo}deg`;
+
+            // cinta
+            const inclinacion = Math.max(-12, Math.min(12, velScroll * 0.4));
+            cinta.style.transform = `skewY(${-inclinacion * 0.3}deg)`;
+            if (animCinta) animCinta.playbackRate = 1 + Math.min(8, Math.abs(velScroll) * 0.25);
+
+            // llenado de los números
+            secciones.forEach((s) => {
+                const r = s.getBoundingClientRect();
+                const p = Math.max(0, Math.min(1, (innerHeight * 0.85 - r.top) / (r.height * 0.8)));
+                s.querySelector(".num").style.setProperty("--llenado", `${p * 100}%`);
+            });
+
+            requestAnimationFrame(cuadro);
+        }
+        if (!sinMovimiento) requestAnimationFrame(cuadro);
+
+        // Asignaturas: el nombre se "decodifica" al pasar el mouse
+        const signos = "ABCDEFGHIJKLMNOPQRSTUVWXYZ01<>/#$%&*";
+        document.querySelectorAll(".lista li").forEach((li) => {
+            const nom = li.querySelector(".nom");
+            const original = nom.dataset.texto;
+            let temporizador;
+            li.addEventListener("mouseenter", () => {
+                if (sinMovimiento) return;
+                let paso = 0;
+                clearInterval(temporizador);
+                temporizador = setInterval(() => {
+                    nom.textContent = [...original].map((c, i) =>
+                        i < paso || c === " " ? c : signos[Math.floor(Math.random() * signos.length)]
+                    ).join("");
+                    paso += original.length / 14;
+                    if (paso >= original.length) { nom.textContent = original; clearInterval(temporizador); }
+                }, 35);
+            });
+        });
+
+        // Hobbies: stickers que se arrastran y regresan con rebote
+        document.querySelectorAll(".sticker").forEach((st) => {
+            let inicioX, inicioY, dx = 0, dy = 0;
+            st.addEventListener("pointerdown", (e) => {
+                st.setPointerCapture(e.pointerId);
+                st.classList.add("arrastrando");
+                inicioX = e.clientX - dx; inicioY = e.clientY - dy;
+            });
+            st.addEventListener("pointermove", (e) => {
+                if (!st.classList.contains("arrastrando")) return;
+                dx = e.clientX - inicioX; dy = e.clientY - inicioY;
+                st.style.translate = `${dx}px ${dy}px`;
+            });
+            const soltar = () => {
+                if (!st.classList.contains("arrastrando")) return;
+                st.classList.remove("arrastrando");
+                st.animate([{ translate: `${dx}px ${dy}px` }, { translate: "0 0" }],
+                    { duration: 700, easing: "cubic-bezier(.3, 1.6, .5, 1)" });
+                st.style.translate = "0 0";
+                dx = 0; dy = 0;
+            };
+            st.addEventListener("pointerup", soltar);
+            st.addEventListener("pointercancel", soltar);
+        });
+    </script>
+</body>
+</html>
